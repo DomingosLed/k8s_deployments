@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app
+  name: web
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name : db
+        env:
+          - name: MYSQL_DATABASE
+            value: sylius
+          - name: MYSQL_PASSWORD
+            value: nopassword
+          - name: MYSQL_ROOT_PASSWORD
+            value: nopassword
+          - name: MYSQL_USER
+            value: sylius
+        image : percona:5.7
+
+        volumeMounts:  
+        - mountPath: "/srv/sylius"
+          name: www-data
+        - mountPath: "/var/lib/mysql/"
+          name : mysql-pv-volume
+          subPath: "sylius/"
+       
+        ports:
+        - containerPort: 3306
+          name: http
+          protocol: TCP
+        resources: {}
+        
+          
+      - name: sylius-php-fpm
+        image: licass/sylius_phpfpm:example
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 9000
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        - mountPath: "/srv/sylius"
+          name: www-data
+
+      - name: sylius-node
+        image: licass/sylius_nodejs:example
+        imagePullPolicy: Always
+        command: [ "sleep" ]
+        args: [ "infinity" ]
+        volumeMounts:  
+        - mountPath: "/srv/sylius"
+          name: www-data
+
+      - name: nginx
+        image: nginx:alpine
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        volumeMounts:
+        - name: nginx-config-volume
+          mountPath: /etc/nginx/conf.d/default.conf
+          subPath: default.conf
+        - mountPath: "/srv/sylius"
+          name: www-data
+      restartPolicy: Always
+      serviceAccountName: ""
+      
+      initContainers:
+      - name: git-cloner
+        image: alpine/git
+        args:
+            - clone
+            - --single-branch
+            - --
+            - https://github.com/Sylius/Sylius-Standard.git
+            - /data
+        volumeMounts:
+        - mountPath: /data
+          name: www-data
+      
+      volumes:         
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+      - name: www-data
+        emptyDir: {} 
+      - name: mysql-pv-volume
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim 
+

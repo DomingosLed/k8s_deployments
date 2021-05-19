@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: camel-k
+  labels:
+    app: camel
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: camel
+  template:
+    metadata:
+      labels:
+        app: camel
+    spec:
+      containers:
+      - name: camel
+        image: apache/camel-k:latest
+        ports: 
+        - containerPort: 80

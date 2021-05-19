@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: pim
+  name: pimcore
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pim
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: pim
+    spec:
+      containers:
+      - name : mysql
+        env:
+          - name: MYSQL_DATABASE
+            value: pimcore
+          - name: MYSQL_PASSWORD
+            value: pimcore
+          - name: MYSQL_ROOT_PASSWORD
+            value: ROOT
+          - name: MYSQL_USER
+            value: pimcore
+        image : mariadb
+
+        volumeMounts:  
+        - mountPath: "/var/www/html"
+          name: www-data
+       
+        ports:
+        - containerPort: 3306
+          name: http
+          protocol: TCP
+        resources: {}
+        
+          
+      - name: pimcorex-php-apache
+        image: licass/pimcorex_php:example
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        volumeMounts:
+
+        - mountPath: "/var/www/html"
+          name: www-data
+      
+      - name: redis
+        image: redis:alpine
+       
+    
+
+      
+      restartPolicy: Always
+      serviceAccountName: ""
+      
+      initContainers:
+      - name: git-cloner
+        image: alpine/git
+        args:
+            - clone
+            - --single-branch
+            - --
+            - https://github.com/pimcore/demo.git
+            - /data
+        volumeMounts:
+        - mountPath: /data
+          name: www-data
+      
+      volumes:         
+
+      - name: www-data
+        emptyDir: {}   
+

@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: app
+  name: web
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: app
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: app
+    spec:
+      containers:
+      - name : mysql
+        env:
+          - name: MYSQL_DATABASE
+            value: sylius
+          - name: MYSQL_PASSWORD
+            value: nopassword
+          - name: MYSQL_ROOT_PASSWORD
+            value: nopassword
+          - name: MYSQL_USER
+            value: sylius
+        image : mariadb
+        volumeMounts:
+           - mountPath: /var/lib/mysql/sylius
+             subPath: var/lib/mysql/sylius
+             name: mysql-pv-volume-storage
+             
+        args:
+          - "--ignore-db-dir=lost+found"
+        ports:
+        - containerPort: 3306
+          name: http
+          protocol: TCP
+        resources: {}
+        
+          
+      - name: sylius-php-fpm
+        image: licass:v4
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9000
+          name: http
+          protocol: TCP
+        volumeMounts:
+          - name: volwww
+            mountPath: /srv
+            subPath: app
+
+      - name: nginx
+        image: nginx:alpine
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        volumeMounts:
+          - name: volwww
+            mountPath: /srv
+            subPath: app
+      restartPolicy: Always
+      serviceAccountName: ""
+
+      volumes:         
+      - name: nginx-config-volume
+        configMap:
+          name: nginx-config
+          
+      - name: mysql-pv-volume-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim    
+      
+      - name: volwww
+        hostPath:
+          path: /home/led/projets/commerce/sylius/
+          type: Directory

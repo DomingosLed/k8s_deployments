@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: strimzikafka-k
+  labels:
+    app: strimzikafka
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: strimzikafka
+  template:
+    metadata:
+      labels:
+        app: strimzikafka
+    spec:
+      containers:
+      - name: strimzikafka
+        image: strimzi/kafka
+
+        ports: 
+        - containerPort: 80

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+    name: webserver
+    labels:
+        app: pim
+spec:
+    ports:
+        - name: http
+          port: 80
+          targetPort: 80
+    selector:
+        app: pim
+    type: LoadBalancer
