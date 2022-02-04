@@ -11,4 +11,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /home/led/Desktop/docker/mysql/sylius
+    path: /home/led/Desktop/docker/mysql

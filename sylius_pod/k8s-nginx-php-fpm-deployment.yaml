@@ -18,6 +18,7 @@ spec:
         app: app
     spec:
       containers:
+
       - name : db
         env:
           - name: MYSQL_DATABASE
@@ -33,16 +34,15 @@ spec:
         volumeMounts:  
         - mountPath: "/srv/sylius"
           name: www-data
-        - mountPath: "/var/lib/mysql/"
+        - mountPath: "/var/lib/mysql"
           name : mysql-pv-volume
-          subPath: "sylius/"
+         # subPath: "mysql/"
        
         ports:
         - containerPort: 3306
           name: http
           protocol: TCP
-        resources: {}
-        
+        resources: {}  
           
       - name: sylius-php-fpm
         image: licass/sylius_phpfpm:example
@@ -66,6 +66,8 @@ spec:
         volumeMounts:  
         - mountPath: "/srv/sylius"
           name: www-data
+
+      
 
       - name: nginx
         image: nginx:alpine
